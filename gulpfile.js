@@ -39,10 +39,6 @@ function video() {
     .pipe(dest(`${DEST_DIR}/video`))
 }
 
-function build() {
-  return parallel(html, css, js, video, imgage);
-}
-
 function deploy() {
   return src(path.join(__dirname, `${DEST_DIR}/**/*`))
     .pipe(sftp({
@@ -54,8 +50,6 @@ function deploy() {
 }
 
 exports.clean = clean;
-
-exports.build = build;
 
 exports.deploy = deploy
 
