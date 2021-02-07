@@ -17,12 +17,16 @@
   const FS_SOURCE = `
     precision mediump float;
 
+    uniform int uTextureFlag;
     uniform sampler2D uTexture;
     varying vec2 vUv;
 
     void main() {
-      // gl_FragColor = vec4(0, 1, 1, 1);
-      gl_FragColor = texture2D(uTexture, vUv);
+      if (uTextureFlag > 0) {
+        gl_FragColor = texture2D(uTexture, vUv);
+      } else {
+        gl_FragColor = vec4(0, 1, 1, 1);
+      }
     }
   `;
   const program = createProgram(
@@ -81,6 +85,9 @@
 
     const uProjectMatrix = gl.getUniformLocation(program, 'uProjectMatrix');
     gl.uniformMatrix3fv(uProjectMatrix, false, project(0, canvas.clientWidth, 0, canvas.clientHeight));
+
+    const uTextureFlag = gl.getUniformLocation(program, 'uTextureFlag');
+    gl.uniform1i(uTextureFlag, textureFlag);
 
     if (textureFlag) {
       const uTexture = gl.getUniformLocation(program, 'uTexture');
