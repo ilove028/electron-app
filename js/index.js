@@ -21,8 +21,8 @@
     varying vec2 vUv;
 
     void main() {
-      gl_FragColor = vec4(0, 1, 1, 1);
-      // gl_FragColor = texture2D(uTexture, vUv);
+      // gl_FragColor = vec4(0, 1, 1, 1);
+      gl_FragColor = texture2D(uTexture, vUv);
     }
   `;
   const program = createProgram(
@@ -30,6 +30,8 @@
     createShader(gl, gl.VERTEX_SHADER, VS_SOURCE),
     createShader(gl, gl.FRAGMENT_SHADER, FS_SOURCE)
   );
+
+  let textureFlag = 0;
   
   document.querySelector('#file').addEventListener('change', (e) => {
     const reader = new FileReader();
@@ -79,6 +81,13 @@
 
     const uProjectMatrix = gl.getUniformLocation(program, 'uProjectMatrix');
     gl.uniformMatrix3fv(uProjectMatrix, false, project(0, canvas.clientWidth, 0, canvas.clientHeight));
+
+    if (textureFlag) {
+      const uTexture = gl.getUniformLocation(program, 'uTexture');
+      // gl.activeTexture(gl.TEXTURE0);
+      // gl.bindTexture(gl.TEXTURE_2D);
+      gl.uniform1i(uTexture, 0);
+    }
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
@@ -151,6 +160,15 @@
     ]
   }
 
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = resolve.bind(null, img);
+      img.onerror = reject;
+    });
+  }
+
   function MVideo(selector) {
     this._el = document.querySelector(selector);
     document.addEventListener('click', () => {
@@ -163,4 +181,19 @@
   }
 
   new MVideo('video');
+
+  function loadTexture() {
+    return loadImage('/img/result.png')
+      .then((img) => {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        textureFlag = 1;
+      })
+      .catch(console.error);
+  }
 })();
