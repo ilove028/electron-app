@@ -4,10 +4,11 @@
   const VS_SOURCE = `
     attribute vec2 aPosition;
     uniform mat3 uRotateMatrix;
+    uniform mat3 uTranslateMatrix;
     uniform mat3 uProjectMatrix;
 
     void main() {
-      gl_Position = vec4(vec3(aPosition, 1) * uRotateMatrix * uProjectMatrix, 1);
+      gl_Position = vec4(vec3(aPosition, 1) * uRotateMatrix * uTranslateMatrix * uProjectMatrix, 1);
     }
   `;
   const FS_SOURCE = `
@@ -59,6 +60,9 @@
     const uRotateMatrix = gl.getUniformLocation(program, 'uRotateMatrix');
     gl.uniformMatrix3fv(uRotateMatrix, false, rotate2D(degree));
 
+    const uTranslateMatrix = gl.getUniformLocation(program, 'uTranslateMatrix');
+    gl.uniformMatrix3fv(uTranslateMatrix, false, translate2D(canvas.clientWidth / 2, canvas.clientHeight / 2));
+
     const uProjectMatrix = gl.getUniformLocation(program, 'uProjectMatrix');
     gl.uniformMatrix3fv(uProjectMatrix, false, project(0, canvas.clientWidth, 0, canvas.clientHeight));
 
@@ -85,10 +89,10 @@
     return program;
   }
 
-  function createMatrix3Identity() {
+  function translate2D(x, y) {
     return [
-      1, 0, 0,
-      0, 1, 0,
+      1, 0, x,
+      0, 1, y,
       0, 0, 1
     ];
   }
@@ -101,11 +105,36 @@
   }
 
   function project(left, right, top, bottom) {
+    // return [
+    //   2 / (right - left), 0 , -1,
+    //   0, 2 / (bottom - top), -1,
+    //   0, 0, 1
+    // ];
+    // 先进行Y轴翻转 在进行缩放为2 * 2 在平移到相应位置
+    /**
+     * [
+     *  1, 0.  0.
+     *  0. -1. 0.
+     *  0. 0.  1
+     * ] *
+     * [
+     *  2 / (r - l), 0,           0,
+     *  0,           2 / (b - t), 0,
+     *  0,           0,           1
+     * ] *
+     * [
+     *  1,                   0,                   0,
+     *  0,                   1,                   0,
+     *  -1 - 2 * t / (r -l), 1 - 2 * l / (t - b), 1
+     * ]
+     */
+    const width = right - left;
+    const height = top - bottom;
     return [
-      2 / (right - left), 0 , -1,
-      0, 2 / (bottom - top), -1,
-      0, 0, 1
-    ];
+      2 / width, 0, -1 - 2 * top / width,
+      0, 2 / height, 1 - 2 * left / height,
+      0, 0, 1 
+    ]
   }
 
   function MVideo(selector) {
