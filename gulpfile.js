@@ -24,22 +24,27 @@ function html() {
 }
 
 function css() {
-  return src('./**/*.css')
+  return src('css/*.css')
     .pipe(gzip())
-    .pipe(dest(DEST_DIR));
+    .pipe(dest(`${DEST_DIR}/css`));
+}
+
+function imgage() {
+  return src('img/*')
+    .pipe(dest(`${DEST_DIR}/img`))
 }
 
 function video() {
-  return src('./*.mp4')
-    .pipe(dest(DEST_DIR))
+  return src('video/*.mp4')
+    .pipe(dest(`${DEST_DIR}/video`))
 }
 
 function build() {
-  return parallel(html, css, js, video);
+  return parallel(html, css, js, video, imgage);
 }
 
 function deploy() {
-  return src(path.join(__dirname, './public/**/*'))
+  return src(path.join(__dirname, `${DEST_DIR}/**/*`))
     .pipe(sftp({
       host: process.env.SFTP_HOST,
       user: process.env.SFTP_USER,
@@ -54,4 +59,4 @@ exports.build = build;
 
 exports.deploy = deploy
 
-exports.default = series(clean, parallel(html, css, js, video), deploy);
+exports.default = series(clean, parallel(html, css, js, video, imgage), deploy);

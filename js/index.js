@@ -107,4 +107,17 @@
       0, 0, 1
     ];
   }
+
+  function MVideo(selector) {
+    this._el = document.querySelector(selector);
+    document.addEventListener('click', () => {
+      this.play();
+    });
+  }
+
+  MVideo.prototype.play = function() {
+    this._el.play();
+  }
+
+  new MVideo('video');
 })();
