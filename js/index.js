@@ -3,19 +3,26 @@
   const gl = canvas.getContext('webgl');
   const VS_SOURCE = `
     attribute vec2 aPosition;
+    attribute vec2 aUv;
     uniform mat3 uRotateMatrix;
     uniform mat3 uTranslateMatrix;
     uniform mat3 uProjectMatrix;
+    varying vec2 vUv;
 
     void main() {
+      vUv = aUv;
       gl_Position = vec4(vec3(aPosition, 1) * uRotateMatrix * uTranslateMatrix * uProjectMatrix, 1);
     }
   `;
   const FS_SOURCE = `
     precision mediump float;
 
+    uniform sampler2D uTexture;
+    varying vec2 vUv;
+
     void main() {
       gl_FragColor = vec4(0, 1, 1, 1);
+      // gl_FragColor = texture2D(uTexture, vUv);
     }
   `;
   const program = createProgram(
@@ -49,13 +56,20 @@
   });
 
   function render(buffer, degree) {
+    const BYTES_PER_ELEMENT = new Float32Array().BYTES_PER_ELEMENT;
     gl.clearColor(1, 1, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);
-    const aPosition = gl.getAttribLocation(program, 'aPosition');
+
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+    const aPosition = gl.getAttribLocation(program, 'aPosition');
+    gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 4 * BYTES_PER_ELEMENT, 0);
     gl.enableVertexAttribArray(aPosition);
+
+    const aUv = gl.getAttribLocation(program, 'aUv');
+    gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 4 * BYTES_PER_ELEMENT, 2 * BYTES_PER_ELEMENT);
+    gl.enableVertexAttribArray(aUv);
 
     const uRotateMatrix = gl.getUniformLocation(program, 'uRotateMatrix');
     gl.uniformMatrix3fv(uRotateMatrix, false, rotate2D(degree));
